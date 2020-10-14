@@ -59,5 +59,70 @@
 
    此时，拿到的数据便是登录用户关注UP主的动态。
    
+3. Seleium使用
 
+   - 安装seleium`pip install selenium`
+
+   - 下载浏览器驱动[下载地址](http://www.testclass.net/selenium_python/selenium3-browser-driver/)，版本要对应好。
+
+   - 驱动环境变量配置，将驱动的文件夹路径，添加至Path环境变量
+
+     操作步骤：我的电脑-->属性-->系统设置-->高级-->环境变量-->系统变量-->Path
+
+   案例：
+
+   使用Seleium模拟登录B站，同时请求该用户的动态数据。
+
+   介绍一个seleium的[教程网站](http://www.testclass.net/selenium_python/install-selenium)
+
+   本次案例用到的有：
+
+   元素定位：ID定位`find_element_by_id`、CSS选择器定位`find_element_by_css_selector`
+
+   键盘事件：send_keys
+
+   鼠标事件：click
+
+   元素等待：显式等待
+
+   Cookie操作：`get_cookies()`
+
+   ```python
+   from selenium import webdriver
+   import requests
+   import json
+
+   from selenium.webdriver.support import expected_conditions as EC
+   from selenium.webdriver.support.wait import WebDriverWait
+   from selenium.webdriver.common.by import By
+
+   driver = webdriver.Chrome()
+   driver.get('https://passport.bilibili.com/login')
+   input_box = driver.find_element_by_id('login-username') # 使用标签的ID属性来定位
+   password_box = driver.find_element_by_id('login-passwd') # 使用标签的ID属性来定位
+   input_box.send_keys("xxx") # 账号输入
+   password_box.send_keys("xxxx") # 密码
+
+   submit_btn = driver.find_element_by_css_selector(".btn.btn-login") # 找到登录按钮，
+   submit_btn.click() # 点击事件
+   element = WebDriverWait(driver,20,0.5).until(EC.presence_of_element_located((By.CSS_SELECTOR,".t"))) # 等待20s，直到页面中可以定位到类名为t的元素，每隔0.5s检查一次
+   cookies = driver.get_cookies() # 拿到登录后的cookie
+   print(cookies) # 该cookie是以键值对输出的，因此需要进行拼接
+   cookie_strs = ["{}={}".format(cookie['name'],cookie['value']) for cookie in cookies]
+   cookie = ";".join(cookie_strs) #使用分号拼接即可
+   print(cookie)
+
+   #下面的和之前的案例一样的流程
+   headers = {
+       'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit',
+       'Cookie': cookie
+   }
+   content = requests.get(
+       "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/dynamic_new?uid=269078589&type_list=268435455&from=weball&platform=web",headers=headers)
+   content.encoding = 'utf-8'
+   dynamic_info = json.loads(content.text,encoding='utf-8')
+   print(dynamic_info['data']['cards'])
+   ```
+
+   可以尝试自己用隐式等待做下。
    
